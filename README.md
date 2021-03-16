@@ -108,7 +108,7 @@ export class AppPage {
 The step definition - `e2e/src/steps/app.steps.ts`
 
 ```
-import { Before, Given, Then, When } from 'cucumber';
+import { Before, Given, Then, When } from '@cucumber/cucumber';
 import { expect } from 'chai';
 
 import { AppPage } from '../pages/app.po';
