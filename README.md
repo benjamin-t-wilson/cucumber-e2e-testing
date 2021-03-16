@@ -1,27 +1,139 @@
-# CucumberE2eTesting
+Check out the [full article](https://www.amadousall.com/angular-e2e-with-cucumber/) by Amadou Sall
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 11.2.1.
+## 1. Install the needed dependencies
 
-## Development server
+```
+npm install --save-dev @types/{chai,cucumber} chai cucumber protractor-cucumber-framework
+```
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+### Chai
 
-## Code scaffolding
+Cucumber is a testing framework which doesn't come with an assertion library like Jasmine does, so we need to install one–chai in this article.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+### Protractor Cucumber Framework
 
-## Build
+The protractor-cucumber-framework package is a plugin that does the glue between Protractor and Cucumber. It's what makes possible running Cucumber tests using Protractor.
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+### Type definitions for Chai and Cucumber
 
-## Running unit tests
+The @types/chai and @types/cucumber Type definitions allow TypeScript to perform the necessary type checking.
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+## 2. Setup Cucumber and Chai's type definition files
 
-## Running end-to-end tests
+Open the e2e/tsconfig.json file.
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+Replace:
+`"types": ["jasmine", "jasminewd2", "node"]`
 
-## Further help
+By:
+`"types": ["chai", "cucumber", "node"]`
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+## 3. Update the Protractor configuration to use Cucumber
+
+Open Protractor's configuration file located at e2e/protractor.conf.js and do the following modifications:
+
+### 1. Update the test files to be used by Protractor:
+
+```
+specs: ['./src/features/**/*.feature']
+```
+
+Our feature files will reside in the e2e/src/features folder.
+
+### 2. Tell Protractor that you want to use Cucumber as the testing framework.
+
+```
+framework: 'custom',
+frameworkPath: require.resolve('protractor-cucumber-framework')
+```
+
+### 3. Configure Cucumber Options
+
+```
+cucumberOpts: {
+require: ['./src/steps/**/*.steps.ts'],
+},
+```
+
+cucumberOpts defines the actual command line options that are passed to Cucumber.js. Here we are telling Cucumber that our step definitions files reside in the e2e/src/steps folder.
+
+### 4. Remove any Jasmine specific code from e2e/protractor.conf.js
+
+```
+const { SpecReporter } = require('jasmine-spec-reporter');
+....
+framework: 'jasmine',
+jasmineNodeOpts: {
+showColors: true,
+defaultTimeoutInterval: 30000,
+print: function() {}
+},
+...
+onPrepare() {
+...
+    jasmine.getEnv().addReporter(new SpecReporter({ spec: { displayStacktrace: true } }));
+}
+```
+
+## 4. Write the actual tests
+
+The feature file - `e2e/src/features/app.feature`
+
+```
+Feature: Go to the home
+    Display the title
+
+Scenario: Home Page
+    Given I am on the home page
+    When I do nothing
+    Then I should see the title
+```
+
+The page object - `e2e/src/pages/app.po.ts`
+
+```
+import { browser, by, element } from 'protractor';
+
+export class AppPage {
+    navigateTo() {
+        return browser.get(browser.baseUrl) as Promise<any>;
+    }
+
+    getTitleText() {
+        return element(by.css('app-root h1')).getText() as Promise<string>;
+    }
+}
+```
+
+The step definition - `e2e/src/steps/app.steps.ts`
+
+```
+import { Before, Given, Then, When } from 'cucumber';
+import { expect } from 'chai';
+
+import { AppPage } from '../pages/app.po';
+
+let page: AppPage;
+
+Before(() => {
+    page = new AppPage();
+});
+
+Given(/^I am on the home page$/, async () => {
+    await page.navigateTo();
+});
+
+When(/^I do nothing$/, () => {});
+
+Then(/^I should see the title$/, async () => {
+    expect(await page.getTitleText()).to.equal('Welcome to angular-cli-cucumber-demo!');
+});
+```
+
+## 5. Launch the tests
+
+To launch the tests, simply run the following command:
+
+```
+ng e2e
+```
