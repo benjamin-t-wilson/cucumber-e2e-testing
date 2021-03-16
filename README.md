@@ -3,7 +3,7 @@ Check out the [full article](https://www.amadousall.com/angular-e2e-with-cucumbe
 ## 1. Install the needed dependencies
 
 ```
-npm install --save-dev @types/{chai,cucumber} chai cucumber protractor-cucumber-framework
+npm install --save-dev @types/{chai,cucumber} chai @cucumber/cucumber protractor-cucumber-framework
 ```
 
 ### Chai
